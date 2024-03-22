@@ -1,0 +1,23 @@
+.message {
+    background: lightgrey;
+    border-style: solid;
+    border-radius: 5px;
+    margin-bottom: 10px;
+
+    h2 {
+        font-style: italic;
+        padding: 5px;
+    }
+}
+.error{
+    color: red;
+    h2 {
+        color: red;
+    }
+}
+.success{
+    color: green;
+    h2 {
+        color: green;
+    }
+}
