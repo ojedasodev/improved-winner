@@ -42,6 +42,8 @@ const App = () => {
       create(newPersonObj).then((newPersonObj) => {
         setPersons(persons.concat(newPersonObj));
         toogleMessage(`${newPersonObj.name} added`, "success")
+      }).catch(error => {
+        toogleMessage(error.response.data.error, "error")
       })
       return;
     }
@@ -52,6 +54,8 @@ const App = () => {
         newPersons.push(updated)
         setPersons(newPersons);
         toogleMessage(`${updated.name} updated`, "success")
+      }).catch(error => {
+        toogleMessage(error.response.data.error, "error")
       })
     }
   };

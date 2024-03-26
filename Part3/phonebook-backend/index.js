@@ -1,105 +1,98 @@
+require('dotenv').config()
 const express = require("express")
-const axios = require("axios")
 const morgan = require('morgan')
 const cors = require("cors")
+const Persons = require("./models/person")
 
 const app = express()
 
 morgan.token('body',(req) => {
     if(req.method === "POST") return JSON.stringify(req.body)
 })
+const errorHandler = (error, request, response, next) => {
+    console.error(error.message)
+
+    if (error.name === 'CastError') {
+        return response.status(400).send({ error: 'malformatted id' })
+    } else if (error.name === 'ValidationError') {
+        return response.status(400).json({ error: error.message })
+    }
+    next(error)
+}
+const unknownEndpoint = (request, response) => {
+    response.status(404).send({ error: 'unknown endpoint' })
+}
 
 app.use(cors())
 app.use(express.static('dist'))
 app.use(express.json())
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-
-let persons = [
-    {
-        "id": 1,
-        "name": "Arto Hellas",
-        "number": "040-123456"
-    },
-    {
-        "id": 2,
-        "name": "Ada Lovelace",
-        "number": "39-44-5323523"
-    },
-    {
-        "id": 3,
-        "name": "Dan Abramov",
-        "number": "12-43-234345"
-    },
-    {
-        "id": 4,
-        "name": "Mary Poppendieck",
-        "number": "39-23-6423122"
-    }
-]
-
 app.get('/api/persons', (request, response) => {
-    response.json(persons)
+    Persons.find({}).then(result => {
+        response.json(result)
+    })
 })
 
-app.get('/api/persons/:id', (request, response) => {
-    const id = Number(request.params.id)
-    const [person] = persons.filter((person) => person.id === id)
-    if(!person){
-        response.status(404).json({
-            message: "not found",
-            status : 404
-        })
-    }else{
-        response.json(person)
-    }
+app.get('/api/persons/:id', (request, response, next) => {
+    const id = request.params.id
+    Persons.findById(id).then(note => {
+        if (note) {
+            response.json(note)
+        } else {
+            response.status(404).end()
+        }
+    }).catch(error => {
+        next(error)
+    })
 })
 
-app.get('/info', (request, response) => {
+app.get("/info", (request, response, next) => {
     const now = new Date();
-    response.send(
-        `<div>phonebook has info for ${persons.length} people</div>
-        <div>${now}</div>
+    Persons.countDocuments({}).then(count => {
+        response.send(
+            `<div>phonebook has info for ${count} people</div>
+            <div>${now}</div>
         `)
+    }).catch(err => {
+        next(err)
+    })
 })
 
-function getRandomNumber(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-}
-
-const SERVER = "http://localhost:3001"
-app.post("/api/persons", async (request, response) => {
+app.post("/api/persons", (request, response, next) => {
     const body = request.body
-    if (!body.name || !body["number"]){
-        response.status(400).json({message: "request body must have the items name and number"})
-        return;
-    }
-    if (persons.map(person => person.name).includes(body.name)){
-        response.status(400).json({message: "name already taken"})
-        return;
-    }
-    const newId = getRandomNumber(1, 20)
-    const req = await axios.get(`${SERVER}/api/persons/${newId}`)
-        .then(response => response.status)
-        .catch(err => err)
-    if (req === 200) {
-        response.status(409).json({
-            error: "Resource already exists",
-            message: "The resource you are trying to create already exists on the server."
+    const newPerson = new Persons({
+        name: body.name,
+        number: body.number
+    })
+    newPerson.save().then(result => {
+        response.json(result)
+    })
+        .catch(error => next(error))
+})
+
+app.put("/api/persons/:id", (request, response, next) => {
+    const { name, number } = request.body
+    Persons.findByIdAndUpdate(request.params.id,
+        {name, number},
+        { new: true, runValidators: true, context: 'query' })
+        .then(updated => {
+        response.json(updated)
+    })
+        .catch(error => next(error))
+})
+
+app.delete("/api/persons/:id", (request, response, next) => {
+    const id = request.params.id
+    Persons.deleteOne({ _id: id }).then(result => {
+        response.json({
+            message: result
         })
-    } else {
-        const person = {id: newId, ...body}
-        persons = persons.concat(person)
-        response.json(person)
-    }
+    }).catch(error => next(error))
 })
 
-app.delete("/api/persons/:id", (request, response) => {
-    const id = Number(request.params.id)
-    persons = persons.filter((person) => person.id !== id )
-    response.status(204).end()
-})
-
+app.use(errorHandler)
+app.use(unknownEndpoint)
 const PORT = process.env.PORT || 3001
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`)

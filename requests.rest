@@ -1,0 +1,14 @@
+GET https://phonebook-backend-lv48.onrender.com/api/persons
+###
+POST https://phonebook-backend-lv48.onrender.com/api/persons
+Content-Type: application/json
+
+{
+  "name": "santiago"
+}
+
+###
+GET https://phonebook-backend-lv48.onrender.com/info
+###
+
+DELETE https://phonebook-backend-lv48.onrender.com/api/persons/14
