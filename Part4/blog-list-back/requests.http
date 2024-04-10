@@ -6,7 +6,7 @@ Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImVsYm9zcyIsImlkIjoiNjYwYzI2YTA1NjUyMjFjOGEzYjFkNDAyIiwiaWF0IjoxNzEyMDcyNDAzfQ.X6KuRiLqPJX9VNMH0fCelzXH_wsaNGENgFbfJ8NzQk4
 
 {
-  "title": "el pepe es muy pro",
+  "title": "el pepe es muy pro 2",
   "author": "messi",
   "url": "thecrack.com",
   "likes": 100000
@@ -25,8 +25,8 @@ POST http://localhost:3003/api/users/
 Content-Type: application/json
 
 {
-  "username": "elboss",
-  "name": "santiago",
+  "username": "elpepe",
+  "name": "bribra",
   "password": "dabeto"
 }
 
